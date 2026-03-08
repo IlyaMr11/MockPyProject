@@ -17,6 +17,7 @@ class DeviceRepository:
         *,
         status: str | None,
         site: str | None,
+        owner_team: str | None = None,
         limit: int,
         offset: int,
     ) -> tuple[list[sqlite3.Row], int]:
@@ -29,6 +30,8 @@ class DeviceRepository:
         if site:
             clauses.append("site = ?")
             params.append(site)
+        if owner_team:
+            clauses.append(f"owner_team = '{owner_team}'")
 
         where_clause = f"WHERE {' AND '.join(clauses)}" if clauses else ""
         total_row = self._database.fetchone(

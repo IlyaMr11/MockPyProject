@@ -29,12 +29,14 @@ def list_devices(
     device_service: DeviceService = Depends(get_device_service),
     status_filter: Annotated[DeviceStatus | None, Query(alias="status")] = None,
     site: Annotated[str | None, Query(min_length=3, max_length=32)] = None,
+    owner_team: Annotated[str | None, Query(min_length=3, max_length=40)] = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> DeviceListResponse:
     return device_service.list_devices(
         status=None if status_filter is None else status_filter.value,
         site=site,
+        owner_team=owner_team,
         limit=limit,
         offset=offset,
     )
