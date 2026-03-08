@@ -119,3 +119,14 @@ class EventRepository:
             [since.isoformat()],
         )
         return 0 if row is None else int(row["count"])
+
+    def count_events_for_device(self, device_id: int) -> int:
+        row = self._database.fetchone(
+            """
+            SELECT COUNT(*) AS count
+            FROM device_events
+            WHERE device_id = ?
+            """,
+            [device_id],
+        )
+        return 0 if row is None else int(row["count"])

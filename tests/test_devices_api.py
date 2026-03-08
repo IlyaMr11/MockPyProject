@@ -52,3 +52,32 @@ def test_create_device_invalidates_summary_cache(
     assert refreshed_summary.status_code == 200
     assert refreshed_summary.json()["cached"] is False
     assert refreshed_summary.json()["total_devices"] == 4
+
+
+def test_search_devices_returns_matching_rows(client, reader_headers) -> None:
+    response = client.get(
+        "/devices/search",
+        headers=reader_headers,
+        params={"query": "fra-1", "limit": 10, "offset": 0},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["query"] == "fra-1"
+    assert body["page"]["total"] == 2
+    assert {item["external_id"] for item in body["items"]} == {
+        "edge-gw-1",
+        "sensor-hub-2",
+    }
+    assert all("recent_event_count" in item for item in body["items"])
+
+
+def test_search_devices_requires_read_access(client) -> None:
+    response = client.get(
+        "/devices/search",
+        headers={"X-Api-Key": "bad-token"},
+        params={"query": "fra"},
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "invalid api key"

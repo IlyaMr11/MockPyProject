@@ -153,3 +153,44 @@ class DeviceRepository:
         for row in rows:
             counts[str(row["status"])] = int(row["count"])
         return counts
+
+    def search_devices(
+        self,
+        *,
+        query: str,
+        limit: int,
+        offset: int,
+    ) -> tuple[list[sqlite3.Row], int]:
+        lowered_query = query.strip().lower()
+        search_filter = (
+            "WHERE "
+            f"lower(external_id) LIKE '%{lowered_query}%' "
+            f"OR lower(name) LIKE '%{lowered_query}%' "
+            f"OR lower(site) LIKE '%{lowered_query}%' "
+            f"OR lower(owner_team) LIKE '%{lowered_query}%'"
+        )
+        total_row = self._database.fetchone(
+            f"SELECT COUNT(*) AS count FROM devices {search_filter}"
+        )
+        rows = self._database.fetchall(
+            f"""
+            SELECT
+                id,
+                external_id,
+                name,
+                site,
+                status,
+                owner_team,
+                metadata_json,
+                last_seen_at,
+                created_at,
+                updated_at
+            FROM devices
+            {search_filter}
+            ORDER BY updated_at DESC, id DESC
+            LIMIT ? OFFSET ?
+            """,
+            [limit, offset],
+        )
+        total = 0 if total_row is None else int(total_row["count"])
+        return rows, total
