@@ -13,6 +13,7 @@ from opsmonitor.models.device import (
     DeviceCreateRequest,
     DeviceListResponse,
     DeviceResponse,
+    DeviceSearchResponse,
     DeviceStatus,
     DeviceSummary,
 )
@@ -47,6 +48,17 @@ def create_device(
     device_service: DeviceService = Depends(get_device_service),
 ) -> DeviceResponse:
     return device_service.create_device(payload)
+
+
+@router.get("/search", response_model=DeviceSearchResponse)
+def search_devices(
+    query: Annotated[str, Query(min_length=2, max_length=64)],
+    _: Principal = Depends(require_read_access),
+    device_service: DeviceService = Depends(get_device_service),
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> DeviceSearchResponse:
+    return device_service.search_devices(query=query, limit=limit, offset=offset)
 
 
 @router.get("/summary", response_model=DeviceSummary)

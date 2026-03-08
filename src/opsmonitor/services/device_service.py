@@ -10,6 +10,8 @@ from opsmonitor.models.device import (
     DeviceCreateRequest,
     DeviceListResponse,
     DeviceResponse,
+    DeviceSearchItem,
+    DeviceSearchResponse,
     DeviceSummary,
 )
 from opsmonitor.repositories.device_repository import DeviceRepository
@@ -65,6 +67,38 @@ class DeviceService:
         row = self._device_repository.create_device(payload)
         self._summary_cache.invalidate(SUMMARY_CACHE_KEY)
         return self._device_from_row(row)
+
+    def search_devices(
+        self,
+        *,
+        query: str,
+        limit: int,
+        offset: int,
+    ) -> DeviceSearchResponse:
+        rows, total = self._device_repository.search_devices(
+            query=query,
+            limit=limit,
+            offset=offset,
+        )
+        items = [
+            DeviceSearchItem(
+                id=int(row["id"]),
+                external_id=str(row["external_id"]),
+                name=str(row["name"]),
+                site=str(row["site"]),
+                owner_team=str(row["owner_team"]),
+                status=str(row["status"]),
+                recent_event_count=self._event_repository.count_events_for_device(
+                    int(row["id"])
+                ),
+            )
+            for row in rows
+        ]
+        return DeviceSearchResponse(
+            query=query,
+            items=items,
+            page=build_pagination(total=total, limit=limit, offset=offset),
+        )
 
     def get_summary(self) -> DeviceSummary:
         cached = self._summary_cache.get(SUMMARY_CACHE_KEY)

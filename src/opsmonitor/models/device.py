@@ -43,6 +43,22 @@ class DeviceListResponse(BaseModel):
     page: PaginationMeta
 
 
+class DeviceSearchItem(BaseModel):
+    id: int
+    external_id: str
+    name: str
+    site: str
+    owner_team: str
+    status: DeviceStatus
+    recent_event_count: int
+
+
+class DeviceSearchResponse(BaseModel):
+    query: str
+    items: list[DeviceSearchItem]
+    page: PaginationMeta
+
+
 class DeviceSummary(BaseModel):
     total_devices: int
     active_devices: int
