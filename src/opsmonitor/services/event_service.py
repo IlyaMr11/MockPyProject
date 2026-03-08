@@ -8,7 +8,7 @@ from opsmonitor.models.device import DeviceResponse
 from opsmonitor.models.event import EventCreateRequest, EventListResponse, EventResponse
 from opsmonitor.repositories.device_repository import DeviceRepository
 from opsmonitor.repositories.event_repository import EventRepository
-from opsmonitor.services.device_service import SUMMARY_CACHE_KEY
+from opsmonitor.services.device_service import build_summary_cache_key
 from opsmonitor.services.notification_service import NotificationService
 from opsmonitor.utils.cache import TTLCache
 from opsmonitor.utils.pagination import build_pagination
@@ -58,7 +58,7 @@ class EventService:
         )
         timestamp = datetime.now(UTC).isoformat()
         self._device_repository.touch_last_seen(int(device_row["id"]), timestamp)
-        self._summary_cache.invalidate(SUMMARY_CACHE_KEY)
+        self._summary_cache.invalidate(build_summary_cache_key(None))
 
         event = self._event_from_row(event_row)
         if event.severity == "critical":
