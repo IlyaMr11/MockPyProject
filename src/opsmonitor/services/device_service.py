@@ -8,6 +8,9 @@ from fastapi import HTTPException, status
 
 from opsmonitor.models.device import (
     DeviceCreateRequest,
+    DeviceImportFailure,
+    DeviceImportRequest,
+    DeviceImportResponse,
     DeviceListResponse,
     DeviceResponse,
     DeviceSummary,
@@ -65,6 +68,37 @@ class DeviceService:
         row = self._device_repository.create_device(payload)
         self._summary_cache.invalidate(SUMMARY_CACHE_KEY)
         return self._device_from_row(row)
+
+    def import_devices(self, payload: DeviceImportRequest) -> DeviceImportResponse:
+        imported: list[DeviceResponse] = []
+        failed: list[DeviceImportFailure] = []
+
+        for item in payload.items:
+            try:
+                imported.append(self.create_device(item))
+            except Exception as exc:
+                failed.append(
+                    DeviceImportFailure(
+                        external_id=item.external_id,
+                        reason=repr(exc),
+                    )
+                )
+                if not payload.continue_on_error:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail={
+                            "message": "device import stopped after first failure",
+                            "external_id": item.external_id,
+                            "error": repr(exc),
+                        },
+                    ) from exc
+
+        return DeviceImportResponse(
+            imported=imported,
+            failed=failed,
+            imported_count=len(imported),
+            failed_count=len(failed),
+        )
 
     def get_summary(self) -> DeviceSummary:
         cached = self._summary_cache.get(SUMMARY_CACHE_KEY)

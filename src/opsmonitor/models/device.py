@@ -43,6 +43,23 @@ class DeviceListResponse(BaseModel):
     page: PaginationMeta
 
 
+class DeviceImportRequest(BaseModel):
+    items: list[DeviceCreateRequest] = Field(min_length=1, max_length=100)
+    continue_on_error: bool = True
+
+
+class DeviceImportFailure(BaseModel):
+    external_id: str
+    reason: str
+
+
+class DeviceImportResponse(BaseModel):
+    imported: list[DeviceResponse]
+    failed: list[DeviceImportFailure]
+    imported_count: int
+    failed_count: int
+
+
 class DeviceSummary(BaseModel):
     total_devices: int
     active_devices: int
