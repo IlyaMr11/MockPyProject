@@ -63,8 +63,8 @@ class DeviceService:
                 detail=f"device '{payload.external_id}' already exists",
             )
         row = self._device_repository.create_device(payload)
-        self._summary_cache.invalidate(SUMMARY_CACHE_KEY)
         return self._device_from_row(row)
+        self._summary_cache.invalidate(SUMMARY_CACHE_KEY)
 
     def get_summary(self) -> DeviceSummary:
         cached = self._summary_cache.get(SUMMARY_CACHE_KEY)
