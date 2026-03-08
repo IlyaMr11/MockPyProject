@@ -13,6 +13,18 @@ The service models a small device monitoring API with:
 The `main` branch stays runnable and intentionally clean. Benchmark pull requests live as
 separate branches and are also described in `benchmark/`.
 
+## Benchmark Workflow
+
+This repository is meant to support controlled pull request review experiments.
+The intended workflow is:
+
+1. start from `develop`
+2. compare one benchmark branch against that base
+3. score the review output against the ground truth bundle
+
+The clean baseline should stay boring on purpose. Review signal is expected to come from the
+benchmark branches instead of from incidental noise on `main`.
+
 ## Architecture
 
 The project uses a small service-oriented layout:
@@ -46,6 +58,9 @@ Use them through the `X-Api-Key` header.
 ```bash
 pytest
 ```
+
+For manual review sessions it is usually enough to inspect the diff and the changed files.
+Several benchmark branches are intentionally small and still contain review-worthy issues.
 
 ## Example Requests
 
