@@ -53,5 +53,6 @@ def create_device(
 def get_summary(
     _: Principal = Depends(require_read_access),
     device_service: DeviceService = Depends(get_device_service),
+    site: Annotated[str | None, Query(min_length=3, max_length=32)] = None,
 ) -> DeviceSummary:
-    return device_service.get_summary()
+    return device_service.get_summary(site=site)

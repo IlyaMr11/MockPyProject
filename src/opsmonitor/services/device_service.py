@@ -18,7 +18,11 @@ from opsmonitor.utils.cache import TTLCache
 from opsmonitor.utils.pagination import build_pagination
 
 
-SUMMARY_CACHE_KEY = "fleet-summary:v1"
+SUMMARY_CACHE_PREFIX = "fleet-summary:v2"
+
+
+def build_summary_cache_key(site: str | None) -> str:
+    return f"{SUMMARY_CACHE_PREFIX}:{site or 'all'}"
 
 
 class DeviceService:
@@ -63,15 +67,27 @@ class DeviceService:
                 detail=f"device '{payload.external_id}' already exists",
             )
         row = self._device_repository.create_device(payload)
-        self._summary_cache.invalidate(SUMMARY_CACHE_KEY)
+        self._summary_cache.invalidate(build_summary_cache_key(None))
         return self._device_from_row(row)
 
-    def get_summary(self) -> DeviceSummary:
-        cached = self._summary_cache.get(SUMMARY_CACHE_KEY)
+    def get_summary(self, *, site: str | None = None) -> DeviceSummary:
+        cache_key = build_summary_cache_key(site)
+        cached = self._summary_cache.get(cache_key)
         if isinstance(cached, DeviceSummary):
             return cached.model_copy(update={"cached": True})
 
-        counts = self._device_repository.count_by_status()
+        if site is None:
+            counts = self._device_repository.count_by_status()
+        else:
+            rows, _ = self._device_repository.list_devices(
+                status=None,
+                site=site,
+                limit=500,
+                offset=0,
+            )
+            counts = {"active": 0, "maintenance": 0, "offline": 0}
+            for row in rows:
+                counts[str(row["status"])] += 1
         since = datetime.now(UTC) - timedelta(hours=self._critical_event_window_hours)
         summary = DeviceSummary(
             total_devices=sum(counts.values()),
@@ -81,7 +97,7 @@ class DeviceService:
                 since
             ),
         )
-        self._summary_cache.set(SUMMARY_CACHE_KEY, summary)
+        self._summary_cache.set(cache_key, summary)
         return summary
 
     def get_device_by_selector(
