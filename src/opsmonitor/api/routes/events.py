@@ -26,17 +26,19 @@ router = APIRouter(prefix="/events", tags=["events"])
 @router.get("", response_model=EventListResponse)
 async def list_events(
     _: Principal = Depends(require_read_access),
-    event_service: EventService = Depends(get_event_service),
+    evtSvc: EventService = Depends(get_event_service),
     device_id: Annotated[int | None, Query(ge=1)] = None,
     severity: Annotated[EventSeverity | None, Query()] = None,
     source: Annotated[EventSource | None, Query()] = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> EventListResponse:
-    return await event_service.list_events(
+    sevV = None if severity is None else severity.value
+    srcV = None if source is None else source.value
+    return await evtSvc.list_events(
         device_id=device_id,
-        severity=None if severity is None else severity.value,
-        source=None if source is None else source.value,
+        severity=sevV,
+        source=srcV,
         limit=limit,
         offset=offset,
     )
