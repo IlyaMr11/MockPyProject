@@ -17,6 +17,7 @@ class EventRepository:
         *,
         device_id: int | None,
         severity: str | None,
+        site: str | None = None,
         source: str | None,
         limit: int,
         offset: int,
@@ -30,6 +31,9 @@ class EventRepository:
         if severity:
             clauses.append("e.severity = ?")
             params.append(severity)
+        if site:
+            clauses.append("d.site = ?")
+            params.append(site)
         if source:
             clauses.append("e.source = ?")
             params.append(source)
