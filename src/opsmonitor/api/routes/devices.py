@@ -11,6 +11,8 @@ from opsmonitor.api.dependencies import (
 )
 from opsmonitor.models.device import (
     DeviceCreateRequest,
+    DeviceImportRequest,
+    DeviceImportResponse,
     DeviceListResponse,
     DeviceResponse,
     DeviceStatus,
@@ -47,6 +49,19 @@ def create_device(
     device_service: DeviceService = Depends(get_device_service),
 ) -> DeviceResponse:
     return device_service.create_device(payload)
+
+
+@router.post(
+    "/import",
+    response_model=DeviceImportResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def import_devices(
+    payload: DeviceImportRequest,
+    _: Principal = Depends(require_write_access),
+    device_service: DeviceService = Depends(get_device_service),
+) -> DeviceImportResponse:
+    return device_service.import_devices(payload)
 
 
 @router.get("/summary", response_model=DeviceSummary)

@@ -52,3 +52,68 @@ def test_create_device_invalidates_summary_cache(
     assert refreshed_summary.status_code == 200
     assert refreshed_summary.json()["cached"] is False
     assert refreshed_summary.json()["total_devices"] == 4
+
+
+def test_import_devices_creates_multiple_entries(client, writer_headers) -> None:
+    response = client.post(
+        "/devices/import",
+        headers=writer_headers,
+        json={
+            "items": [
+                {
+                    "external_id": "edge-gw-31",
+                    "name": "Edge Gateway 31",
+                    "site": "fra-1",
+                    "owner_team": "ops-core",
+                    "status": "active",
+                    "metadata": {"rack": "r3"},
+                },
+                {
+                    "external_id": "edge-gw-32",
+                    "name": "Edge Gateway 32",
+                    "site": "ams-2",
+                    "owner_team": "ops-core",
+                    "status": "maintenance",
+                    "metadata": {"rack": "r4"},
+                },
+            ]
+        },
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["imported_count"] == 2
+    assert body["failed_count"] == 0
+
+
+def test_import_devices_collects_duplicate_failures(client, writer_headers) -> None:
+    response = client.post(
+        "/devices/import",
+        headers=writer_headers,
+        json={
+            "continue_on_error": True,
+            "items": [
+                {
+                    "external_id": "edge-gw-1",
+                    "name": "Duplicate Edge Gateway",
+                    "site": "fra-1",
+                    "owner_team": "ops-core",
+                    "status": "active",
+                    "metadata": {},
+                },
+                {
+                    "external_id": "edge-gw-99",
+                    "name": "Edge Gateway 99",
+                    "site": "mad-1",
+                    "owner_team": "ops-core",
+                    "status": "active",
+                    "metadata": {},
+                },
+            ],
+        },
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["imported_count"] == 1
+    assert body["failed_count"] == 1
