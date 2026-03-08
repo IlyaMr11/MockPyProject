@@ -44,7 +44,7 @@ class EventService:
             limit=limit,
             offset=offset,
         )
-        items = [self._event_from_row(row) for row in rows]
+        items = [self._mk_ev(row) for row in rows]
         return EventListResponse(
             items=items,
             page=build_pagination(total=total, limit=limit, offset=offset),
@@ -60,7 +60,7 @@ class EventService:
         self._device_repository.touch_last_seen(int(device_row["id"]), timestamp)
         self._summary_cache.invalidate(SUMMARY_CACHE_KEY)
 
-        event = self._event_from_row(event_row)
+        event = self._mk_ev(event_row)
         if event.severity == "critical":
             await self._notification_service.send_critical_event(
                 device=self._device_from_row(device_row),
@@ -82,7 +82,7 @@ class EventService:
         return row
 
     @staticmethod
-    def _event_from_row(row: sqlite3.Row) -> EventResponse:
+    def _mk_ev(row: sqlite3.Row) -> EventResponse:
         return EventResponse(
             id=int(row["id"]),
             device_id=int(row["device_id"]),
