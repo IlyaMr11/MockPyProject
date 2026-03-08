@@ -62,7 +62,7 @@ class EventService:
 
         event = self._event_from_row(event_row)
         if event.severity == "critical":
-            await self._notification_service.send_critical_event(
+            self._notification_service.send_critical_event(
                 device=self._device_from_row(device_row),
                 event=event,
             )
