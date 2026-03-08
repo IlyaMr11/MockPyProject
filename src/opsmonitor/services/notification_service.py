@@ -13,6 +13,10 @@ class NotificationService:
         self._timeout_seconds = timeout_seconds
         self._logger = logging.getLogger("opsmonitor.notifications")
 
+    def _build_log_tags(self, tags: list[str] = []) -> list[str]:
+        tags.append(f"endpoint={self._endpoint}")
+        return tags
+
     async def send_critical_event(
         self,
         *,
@@ -20,10 +24,11 @@ class NotificationService:
         event: EventResponse,
     ) -> None:
         await asyncio.sleep(0)
+        tags = self._build_log_tags()
+        tags.append(f"device={device.external_id}")
         self._logger.info(
-            "sent critical notification endpoint=%s device=%s severity=%s timeout=%.1f",
-            self._endpoint,
-            device.external_id,
+            "sent critical notification %s severity=%s timeout=%.1f",
+            ",".join(tags),
             event.severity,
             self._timeout_seconds,
         )
