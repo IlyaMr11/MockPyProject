@@ -49,7 +49,18 @@ class DeviceService:
             limit=limit,
             offset=offset,
         )
-        items = [self._device_from_row(row) for row in rows]
+        since = datetime.now(UTC) - timedelta(hours=self._critical_event_window_hours)
+        critical_counts = self._event_repository.count_recent_critical_by_device(
+            [int(row["id"]) for row in rows],
+            since=since,
+        )
+        items = [
+            self._device_from_row(
+                row,
+                recent_critical_events=critical_counts.get(int(row["id"]), 0),
+            )
+            for row in rows
+        ]
         return DeviceListResponse(
             items=items,
             page=build_pagination(total=total, limit=limit, offset=offset),
@@ -105,7 +116,11 @@ class DeviceService:
         return self._device_from_row(row)
 
     @staticmethod
-    def _device_from_row(row: sqlite3.Row) -> DeviceResponse:
+    def _device_from_row(
+        row: sqlite3.Row,
+        *,
+        recent_critical_events: int = 0,
+    ) -> DeviceResponse:
         return DeviceResponse(
             id=int(row["id"]),
             external_id=str(row["external_id"]),
@@ -114,6 +129,7 @@ class DeviceService:
             owner_team=str(row["owner_team"]),
             status=str(row["status"]),
             metadata=json.loads(str(row["metadata_json"])),
+            recent_critical_events=recent_critical_events,
             last_seen_at=row["last_seen_at"],
             created_at=row["created_at"],
             updated_at=row["updated_at"],
