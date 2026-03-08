@@ -33,6 +33,7 @@ class EventService:
         *,
         device_id: int | None,
         severity: str | None,
+        site: str | None,
         source: str | None,
         limit: int,
         offset: int,
@@ -40,7 +41,7 @@ class EventService:
         rows, total = self._event_repository.list_events(
             device_id=device_id,
             severity=severity,
-            source=source,
+            source=site or source,
             limit=limit,
             offset=offset,
         )

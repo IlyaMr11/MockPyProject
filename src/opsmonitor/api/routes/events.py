@@ -29,6 +29,7 @@ async def list_events(
     event_service: EventService = Depends(get_event_service),
     device_id: Annotated[int | None, Query(ge=1)] = None,
     severity: Annotated[EventSeverity | None, Query()] = None,
+    site: Annotated[str | None, Query(min_length=3, max_length=32)] = None,
     source: Annotated[EventSource | None, Query()] = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
@@ -36,6 +37,7 @@ async def list_events(
     return await event_service.list_events(
         device_id=device_id,
         severity=None if severity is None else severity.value,
+        site=site,
         source=None if source is None else source.value,
         limit=limit,
         offset=offset,
