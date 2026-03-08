@@ -119,3 +119,26 @@ class EventRepository:
             [since.isoformat()],
         )
         return 0 if row is None else int(row["count"])
+
+    def count_recent_critical_by_device(
+        self,
+        device_ids: list[int],
+        *,
+        since: datetime,
+    ) -> dict[int, int]:
+        if not device_ids:
+            return {}
+
+        placeholders = ", ".join("?" for _ in device_ids)
+        rows = self._database.fetchall(
+            f"""
+            SELECT device_id, COUNT(*) AS count
+            FROM device_events
+            WHERE severity = 'critical'
+              AND created_at >= ?
+              AND device_id IN ({placeholders})
+            GROUP BY device_id
+            """,
+            [since.isoformat(), *device_ids],
+        )
+        return {int(row["device_id"]): int(row["count"]) for row in rows}

@@ -33,6 +33,7 @@ class DeviceResponse(BaseModel):
     owner_team: str
     status: DeviceStatus
     metadata: dict[str, str]
+    recent_critical_events: int = 0
     last_seen_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
