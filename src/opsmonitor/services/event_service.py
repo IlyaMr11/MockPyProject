@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, UTC
 import json
+import logging
 import sqlite3
 
 from opsmonitor.models.device import DeviceResponse
@@ -27,6 +28,7 @@ class EventService:
         self._event_repository = event_repository
         self._notification_service = notification_service
         self._summary_cache = summary_cache
+        self._logger = logging.getLogger("opsmonitor.events")
 
     async def list_events(
         self,
@@ -51,6 +53,12 @@ class EventService:
         )
 
     async def create_event(self, payload: EventCreateRequest) -> EventResponse:
+        payload_json = json.dumps(payload.payload, sort_keys=True)
+        self._logger.info(
+            "received event target=%s payload=%s",
+            payload.device_external_id or payload.device_id,
+            payload_json,
+        )
         device_row = self._resolve_device_row(payload)
         event_row = self._event_repository.create_event(
             payload,
@@ -61,6 +69,11 @@ class EventService:
         self._summary_cache.invalidate(SUMMARY_CACHE_KEY)
 
         event = self._event_from_row(event_row)
+        self._logger.debug(
+            "stored event payload_copy=%s severity=%s",
+            json.dumps(payload.payload, sort_keys=True),
+            event.severity,
+        )
         if event.severity == "critical":
             await self._notification_service.send_critical_event(
                 device=self._device_from_row(device_row),
