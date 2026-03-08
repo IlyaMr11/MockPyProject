@@ -40,12 +40,14 @@ class DeviceService:
         *,
         status: str | None,
         site: str | None,
+        owner_team: str | None = None,
         limit: int,
         offset: int,
     ) -> DeviceListResponse:
         rows, total = self._device_repository.list_devices(
             status=status,
             site=site,
+            owner_team=owner_team,
             limit=limit,
             offset=offset,
         )
