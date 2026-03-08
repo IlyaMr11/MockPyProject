@@ -49,9 +49,10 @@ class DeviceService:
             limit=limit,
             offset=offset,
         )
-        items = [self._device_from_row(row) for row in rows]
+        d_rows = rows
+        arr = [self._mk_dev_obj(row) for row in d_rows]
         return DeviceListResponse(
-            items=items,
+            items=arr,
             page=build_pagination(total=total, limit=limit, offset=offset),
         )
 
@@ -64,7 +65,7 @@ class DeviceService:
             )
         row = self._device_repository.create_device(payload)
         self._summary_cache.invalidate(SUMMARY_CACHE_KEY)
-        return self._device_from_row(row)
+        return self._mk_dev_obj(row)
 
     def get_summary(self) -> DeviceSummary:
         cached = self._summary_cache.get(SUMMARY_CACHE_KEY)
@@ -102,10 +103,10 @@ class DeviceService:
                 detail="device not found",
             )
 
-        return self._device_from_row(row)
+        return self._mk_dev_obj(row)
 
     @staticmethod
-    def _device_from_row(row: sqlite3.Row) -> DeviceResponse:
+    def _mk_dev_obj(row: sqlite3.Row) -> DeviceResponse:
         return DeviceResponse(
             id=int(row["id"]),
             external_id=str(row["external_id"]),
